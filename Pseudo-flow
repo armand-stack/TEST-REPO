@@ -1,0 +1,12 @@
+// Pseudo-flow
+onNewEmail(accountingInbox, async (message) => {
+  if (!alreadyProcessed(message.id)) {
+    await forwardEmail({
+      originalMessageId: message.id,
+      fromMailbox: "accounting@yourdomain.com",
+      to: "accountspayable@yourdomain.com"
+    });
+
+    await markProcessed(message.id);
+  }
+});
