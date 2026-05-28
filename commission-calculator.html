@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SRR Sales Commission Calculator</title>
+<style>
+  :root {
+    --srr-navy: #1c2b3a;
+    --srr-blue: #2f6db5;
+    --srr-accent: #e8a13a;
+    --floor: #4a90d9;
+    --par: #43b581;
+    --over: #e8a13a;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --line: #e2e7ee;
+    --text: #1c2b3a;
+    --muted: #6b7a8d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  header {
+    background: var(--srr-navy);
+    color: #fff;
+    padding: 22px 24px;
+  }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
+  header p { margin: 4px 0 0; color: #9fb2c7; font-size: 13px; }
+  .wrap {
+    max-width: 960px;
+    margin: 24px auto;
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 760px) { .wrap { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(28,43,58,.05);
+  }
+  .card h2 {
+    margin: 0 0 16px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--muted);
+  }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 5px;
+  }
+  .field .hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+  .input-money { position: relative; }
+  .input-money span {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 15px;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 10px 12px 10px 26px;
+    font-size: 15px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input.plain { padding-left: 12px; }
+  input[type="number"]:focus { border-color: var(--srr-blue); }
+  .rates {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-top: 6px;
+  }
+  .rates .field { margin-bottom: 0; }
+  .results .big {
+    font-size: 34px; font-weight: 700; color: var(--srr-navy);
+    margin: 2px 0 2px;
+  }
+  .results .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .bar {
+    display: flex; height: 14px; border-radius: 7px; overflow: hidden;
+    background: #eef1f5; margin: 4px 0 18px;
+  }
+  .bar i { display: block; height: 100%; }
+  .seg-floor { background: var(--floor); }
+  .seg-par { background: var(--par); }
+  .seg-over { background: var(--over); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: right; padding: 9px 6px; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: middle; }
+  tfoot td { font-weight: 700; border-top: 2px solid var(--srr-navy); border-bottom: none; }
+  .totals {
+    margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .tot {
+    background: #f7f9fc; border: 1px solid var(--line); border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .tot .k { font-size: 12px; color: var(--muted); }
+  .tot .v { font-size: 19px; font-weight: 700; margin-top: 2px; }
+  .note {
+    grid-column: 1 / -1;
+    font-size: 12.5px; color: var(--muted); text-align: center;
+    padding: 4px 16px 20px;
+  }
+  .warn { color: #c0392b; font-size: 12.5px; margin-top: 6px; display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SRR Sales Commission Calculator</h1>
+  <p>Saddle River Roofing &middot; marginal-bracket commission on price per Square</p>
+</header>
+
+<div class="wrap">
+  <!-- INPUTS -->
+  <section class="card">
+    <h2>The Deal</h2>
+
+    <div class="field">
+      <label>Sale price per Square <span class="hint">— what the rep sold at</span></label>
+      <div class="input-money"><span>$</span>
+        <input type="number" id="sale" value="600" min="0" step="5" />
+      </div>
+      <div class="warn" id="floorWarn">Below floor price — confirm this deal is approved.</div>
+    </div>
+
+    <div class="field">
+      <label>Number of Squares</label>
+      <input class="plain" type="number" id="squares" value="30" min="0" step="0.5" />
+    </div>
+
+    <h2 style="margin-top:24px;">Tier Setup <span style="text-transform:none;font-weight:400;">(editable)</span></h2>
+
+    <div class="rates">
+      <div class="field">
+        <label>Floor $/sq</label>
+        <div class="input-money"><span>$</span>
+          <input type="number" id="floor" value="400" min="0" step="5" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Par $/sq</label>
+        <div class="input-money"><span>$</span>
+          <input type="number" id="par" value="550" min="0" step="5" />
+        </div>
+      </div>
+    </div>
+
+    <div class="rates" style="margin-top:14px;">
+      <div class="field">
+        <label><span class="swatch seg-floor"></span>Floor %</label>
+        <input class="plain" type="number" id="rFloor" value="5" min="0" step="0.5" />
+      </div>
+      <div class="field">
+        <label><span class="swatch seg-par"></span>Par %</label>
+        <input class="plain" type="number" id="rPar" value="10" min="0" step="0.5" />
+      </div>
+      <div class="field">
+        <label><span class="swatch seg-over"></span>Overage %</label>
+        <input class="plain" type="number" id="rOver" value="50" min="0" step="0.5" />
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="card results">
+    <h2>Rep Commission</h2>
+    <div class="big" id="commTotal">$0</div>
+    <div class="sub" id="commPerSq">$0 per square &middot; 0% effective rate</div>
+
+    <div class="bar" id="bar">
+      <i class="seg-floor" id="barFloor" style="width:0"></i>
+      <i class="seg-par" id="barPar" style="width:0"></i>
+      <i class="seg-over" id="barOver" style="width:0"></i>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Tier</th><th>$/sq taxed</th><th>Rate</th><th>Comm/sq</th><th>Total</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+      <tfoot>
+        <tr><td>Rep total</td><td></td><td></td><td id="ftPerSq">$0</td><td id="ftTotal">$0</td></tr>
+      </tfoot>
+    </table>
+
+    <div class="totals">
+      <div class="tot"><div class="k">Total revenue</div><div class="v" id="revenue">$0</div></div>
+      <div class="tot"><div class="k">Rep commission</div><div class="v" id="repTake">$0</div></div>
+      <div class="tot"><div class="k">House overage share</div><div class="v" id="houseOver">$0</div></div>
+      <div class="tot"><div class="k">Net to house</div><div class="v" id="houseNet">$0</div></div>
+    </div>
+  </section>
+
+  <div class="note">
+    Marginal brackets: each portion of the price per Square is paid at its own rate — the slice up to
+    <b>floor</b> at the floor %, the slice from floor&rarr;par at the par %, and everything above
+    <b>par</b> split with the house at the overage %. Per-square commission &times; squares = rep total.
+    Adjust any rate or threshold above to model different plans.
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const ids = ['sale','squares','floor','par','rFloor','rPar','rOver'];
+  const money = n => n.toLocaleString('en-US', {style:'currency', currency:'USD', maximumFractionDigits:2});
+  const money0 = n => n.toLocaleString('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0});
+  const pct = n => (n).toLocaleString('en-US', {maximumFractionDigits:2}) + '%';
+
+  function num(id) { const v = parseFloat($(id).value); return isNaN(v) ? 0 : v; }
+
+  function calc() {
+    const sale = num('sale'), squares = num('squares');
+    let floor = num('floor'), par = num('par');
+    const rFloor = num('rFloor')/100, rPar = num('rPar')/100, rOver = num('rOver')/100;
+
+    // Keep thresholds sane: par should not be below floor.
+    if (par < floor) par = floor;
+
+    // Marginal slices of price-per-square
+    const sFloor = Math.max(0, Math.min(sale, floor));
+    const sPar   = Math.max(0, Math.min(sale, par) - floor);
+    const sOver  = Math.max(0, sale - par);
+
+    // Commission per square in each tier
+    const cFloor = sFloor * rFloor;
+    const cPar   = sPar   * rPar;
+    const cOver  = sOver  * rOver;
+    const perSq  = cFloor + cPar + cOver;
+
+    const commTotal = perSq * squares;
+    const revenue   = sale * squares;
+    // House share of overage = the part of overage NOT paid to rep
+    const houseOverPerSq = sOver * (1 - rOver);
+    const houseOver = houseOverPerSq * squares;
+    const houseNet  = revenue - commTotal;
+    const effRate   = sale > 0 ? (perSq / sale) * 100 : 0;
+
+    // Header numbers
+    $('commTotal').textContent = money0(commTotal);
+    $('commPerSq').textContent = money(perSq) + ' per square · ' + pct(effRate) + ' effective rate';
+    $('floorWarn').style.display = (sale > 0 && sale < floor) ? 'block' : 'none';
+
+    // Bar widths (relative to per-square commission)
+    const tot = perSq || 1;
+    $('barFloor').style.width = (cFloor/tot*100) + '%';
+    $('barPar').style.width   = (cPar/tot*100) + '%';
+    $('barOver').style.width  = (cOver/tot*100) + '%';
+
+    // Table
+    const rows = [
+      ['seg-floor', 'Floor', sFloor, rFloor, cFloor],
+      ['seg-par',   'Par',   sPar,   rPar,   cPar],
+      ['seg-over',  'Overage (split)', sOver, rOver, cOver],
+    ];
+    $('tbody').innerHTML = rows.map(([cls,name,base,rate,comm]) =>
+      '<tr>' +
+        '<td><span class="swatch '+cls+'"></span>'+name+'</td>' +
+        '<td>'+money(base)+'</td>' +
+        '<td>'+pct(rate*100)+'</td>' +
+        '<td>'+money(comm)+'</td>' +
+        '<td>'+money(comm*squares)+'</td>' +
+      '</tr>'
+    ).join('');
+
+    $('ftPerSq').textContent = money(perSq);
+    $('ftTotal').textContent = money(commTotal);
+
+    // Totals grid
+    $('revenue').textContent   = money0(revenue);
+    $('repTake').textContent   = money0(commTotal);
+    $('houseOver').textContent = money0(houseOver);
+    $('houseNet').textContent  = money0(houseNet);
+  }
+
+  ids.forEach(id => $(id).addEventListener('input', calc));
+  calc();
+</script>
+</body>
+</html>
